@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clipboard/clipboard.dart';
 import 'package:clipboard/util/result/result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,8 +13,9 @@ class WebSocketRoute extends StatefulWidget {
 
 class _WebSocketRouteState extends State<WebSocketRoute> {
   TextEditingController _controller = new TextEditingController();
-  IOWebSocketChannel channel;
+  static IOWebSocketChannel channel;
   String _text = "";
+  String _clipContent = "";
 
   @override
   void initState() {
@@ -26,7 +28,7 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: new Text("Clipboard Websocket"),
+        title: Text("Clipboard Websocket"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -34,9 +36,9 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Form(
-              child: new TextFormField(
+              child: TextFormField(
                 controller: _controller,
-                decoration: new InputDecoration(labelText: 'Send a message'),
+                decoration: InputDecoration(labelText: 'Send a message'),
               ),
             ),
             StreamBuilder(
@@ -48,7 +50,9 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
                 } else if (snapshot.hasData) {
 //                  Map res = json.decode(snapshot.data);
 //                  var list = getResultList(res);
-                  _text = "echo: " + snapshot.data.toString();
+                  print("接收的剪切板数据2.1:" + snapshot.data);
+                  _text = snapshot.data;
+                  print("接收的剪切板数据2:" + _text);
                   Clipboard.setData(ClipboardData(text: _text));
                 }
                 return Padding(
@@ -56,22 +60,48 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
                   child: Text(_text),
                 );
               },
-            )
+            ),
+            StreamBuilder(
+              stream: Clip.monitor(),
+              builder: (context, s) {
+                //网络不通会走到这
+                if (s.hasError) {
+                  _clipContent = "未连接...";
+                } else if (s.hasData) {
+                  _clipContent = s.data;
+                  // 发送本地剪切板数据
+                  if (_clipContent != "") {
+                    print("发送的剪切板数据:" + _clipContent);
+//                    Clipboard.setData(ClipboardData(text: _clipContent));
+                    sendMessage(_clipContent);
+                    print("发送的剪切板数据S:" + _clipContent);
+                  }
+                }
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48.0),
+                  child: Text(_clipContent),
+                );
+              },
+            ),
           ],
         ),
       ),
-      floatingActionButton: new FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: _sendMessage,
-        tooltip: 'Send message',
-        child: new Icon(Icons.send),
+        tooltip: '发送',
+        child: Icon(Icons.send),
       ),
     );
   }
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
-      channel.sink.add(_controller.text);
+      sendMessage(_controller.text);
     }
+  }
+
+  void sendMessage(dynamic msg) {
+    channel.sink.add(msg);
   }
 
   @override
