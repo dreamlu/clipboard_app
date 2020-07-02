@@ -1,7 +1,22 @@
+import 'package:clipboard/backTask.dart';
 import 'package:clipboard/clipWs.dart';
 import 'package:flutter/material.dart';
+import 'package:workmanager/workmanager.dart';
+
+const myTask = "clipboardTask";
 
 void main() {
+  WidgetsFlutterBinding
+      .ensureInitialized(); // https://github.com/flutter/flutter/issues/40253
+  Workmanager.initialize(
+    callbackTask,
+//      isInDebugMode: true
+  );
+  Workmanager.registerPeriodicTask(
+    "1",
+    myTask,
+    frequency: Duration(seconds: 5),
+  );
   runApp(MyApp());
 }
 

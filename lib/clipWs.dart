@@ -12,23 +12,35 @@ class WebSocketRoute extends StatefulWidget {
 }
 
 class _WebSocketRouteState extends State<WebSocketRoute> {
-  TextEditingController _controller = new TextEditingController();
+  TextEditingController _controller = new TextEditingController.fromValue(
+    // 默认值
+    TextEditingValue(text: 'ws://'),
+  );
+
   static IOWebSocketChannel channel;
   String _text = "";
   String _clipContent = "";
 
+  String api = "ws://192.168.31.105:9001";
+  String url = '/api/clip';
+
   @override
   void initState() {
+    super.initState();
     //创建websocket连接
-    channel =
-        new IOWebSocketChannel.connect('ws://192.168.31.105:9001/api/clip');
+    channel = new IOWebSocketChannel.connect(api + url);
+  }
+
+  void changeState() {
+    channel.sink.close();
+    channel = new IOWebSocketChannel.connect(api + url);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Clipboard Websocket"),
+        title: Text("剪切板共享"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -38,7 +50,7 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
             Form(
               child: TextFormField(
                 controller: _controller,
-                decoration: InputDecoration(labelText: 'Send a message'),
+                decoration: InputDecoration(labelText: '输入局域网地址'),
               ),
             ),
             StreamBuilder(
@@ -48,12 +60,10 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
                 if (snapshot.hasError) {
                   _text = "网络不通...";
                 } else if (snapshot.hasData) {
-//                  Map res = json.decode(snapshot.data);
-//                  var list = getResultList(res);
-                  print("接收的剪切板数据2.1:" + snapshot.data);
-                  _text = snapshot.data;
-                  print("接收的剪切板数据2:" + _text);
-                  Clipboard.setData(ClipboardData(text: _text));
+                  _text = "websocket连接成功...";
+                  Clipboard.setData(ClipboardData(text: snapshot.data));
+                } else {
+                  _text = "websocket连接成功...";
                 }
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -62,19 +72,17 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
               },
             ),
             StreamBuilder(
-              stream: Clip.monitor(),
+              stream: Clip.clipboard(),
               builder: (context, s) {
                 //网络不通会走到这
                 if (s.hasError) {
-                  _clipContent = "未连接...";
+                  _clipContent = "app剪切板监听err..." + s.error.toString();
                 } else if (s.hasData) {
                   _clipContent = s.data;
-                  // 发送本地剪切板数据
-                  if (_clipContent != "") {
-                    print("发送的剪切板数据:" + _clipContent);
-//                    Clipboard.setData(ClipboardData(text: _clipContent));
+                  // 发送本地剪切板数据到server
+                  if (s.data != _clipContent) {
+                    _clipContent = s.data;
                     sendMessage(_clipContent);
-                    print("发送的剪切板数据S:" + _clipContent);
                   }
                 }
                 return Padding(
@@ -88,7 +96,7 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _sendMessage,
-        tooltip: '发送',
+        tooltip: '确定',
         child: Icon(Icons.send),
       ),
     );
@@ -96,7 +104,9 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
-      sendMessage(_controller.text);
+      //sendMessage(_controller.text);
+      api = _controller.text;
+      changeState();
     }
   }
 
