@@ -10,7 +10,8 @@ now: linux/android
 android
 
 运行:  
-1.下载安装
+1.下载安装  
+2.[releases下载](https://github.com/dreamlu/clipboard_app/releases)   
 
 已完成：  
 1.提供剪切板实时共享服务端  
