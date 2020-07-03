@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:clipboard/clipboard.dart';
-import 'package:clipboard/util/result/result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:web_socket_channel/io.dart';
@@ -18,6 +15,7 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
   );
 
   static IOWebSocketChannel channel;
+
   String _text = "";
   String _clipContent = "";
 
@@ -34,6 +32,8 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
   void changeState() {
     channel.sink.close();
     channel = new IOWebSocketChannel.connect(api + url);
+    setState(() {}); // 重新加载
+    sendMessage(_clipContent);
   }
 
   @override
@@ -50,7 +50,8 @@ class _WebSocketRouteState extends State<WebSocketRoute> {
             Form(
               child: TextFormField(
                 controller: _controller,
-                decoration: InputDecoration(labelText: '输入局域网地址'),
+                decoration: InputDecoration(
+                    labelText: '输入局域网地址'), // \neg:ws://192.168.31.105:9001
               ),
             ),
             StreamBuilder(
