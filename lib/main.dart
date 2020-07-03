@@ -6,16 +6,17 @@ import 'package:workmanager/workmanager.dart';
 const myTask = "clipboardTask";
 
 void main() {
+  // workmanager 这里暂时没用了~android 10限制后台无法访问剪切板
   WidgetsFlutterBinding
       .ensureInitialized(); // https://github.com/flutter/flutter/issues/40253
   Workmanager.initialize(
     callbackTask,
 //      isInDebugMode: true
   );
-  Workmanager.registerPeriodicTask(
+  Workmanager.registerOneOffTask(
     "1",
     myTask,
-    frequency: Duration(seconds: 5),
+//    frequency: Duration(seconds: 5),
   );
   runApp(MyApp());
 }
